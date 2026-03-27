@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify Python syntax
+        run: |
+          python3 -m py_compile poc_cve_2026_24061.py
+          python3 -m py_compile cve_2026_24061.py
+          python3 -m py_compile scripts/generate_signatures.py
+          python3 -m py_compile scripts/generate_misp_event.py
+          python3 -m py_compile scripts/generate_stix_bundle.py
+          echo "[+] All scripts compile OK."
+
+  threat-intel:
+    name: Generate threat intel artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Generate IDS signatures
+        run: python3 scripts/generate_signatures.py
+
+      - name: Generate MISP event
+        run: python3 scripts/generate_misp_event.py
+
+      - name: Generate STIX 2.1 bundle
+        run: python3 scripts/generate_stix_bundle.py
+
+      - name: Validate outputs exist
+        run: |
+          test -f signatures/snort.rules && echo "[+] snort.rules"
+          test -f signatures/sigma.yml && echo "[+] sigma.yml"
+          test -f indicators/misp_event.json && echo "[+] misp_event.json"
+          test -f indicators/stix_bundle.json && echo "[+] stix_bundle.json"
+
+      - name: Upload threat intel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: threat-intel
+          path: |
+            signatures/
+            indicators/
+          retention-days: 90

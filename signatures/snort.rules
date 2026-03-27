@@ -1,0 +1,34 @@
+# CVE-2026-24061 - GNU InetUtils telnetd NEW-ENVIRON auth bypass
+# Auto-generated on 2026-03-27 from exploit payload
+# Payload hex: FF FA 27 00 00 55 53 45 52 01 2D 66 20 72 6F 6F 74 FF F0
+
+# Detect exploit attempt (client -> server)
+alert tcp any any -> any 23 (
+  msg:"CVE-2026-24061 telnetd USER=-f root exploit attempt";
+  flow:to_server,established;
+  content:"|FF FA 27 00 00 55 53 45 52 01 2D 66 20 72 6F 6F 74 FF F0|";
+  reference:cve,2026-24061;
+  classtype:attempted-admin;
+  sid:2026240610; rev:1;
+)
+
+# Generic detection: any USER value starting with "-f" via NEW-ENVIRON
+alert tcp any any -> any 23 (
+  msg:"Telnet NEW-ENVIRON USER -f flag injection (generic)";
+  flow:to_server,established;
+  content:"|FF FA 27 00 00|USER|01|-f";
+  reference:cve,2026-24061;
+  reference:cve,2001-0797;
+  classtype:attempted-admin;
+  sid:2026240611; rev:1;
+)
+
+# Post-exploitation: root shell confirmation in telnet session
+alert tcp any 23 -> any any (
+  msg:"CVE-2026-24061 successful root shell via telnetd";
+  flow:to_client,established;
+  content:"uid=0(root)";
+  reference:cve,2026-24061;
+  classtype:successful-admin;
+  sid:2026240612; rev:1;
+)

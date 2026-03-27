@@ -1,0 +1,57 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE / Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Windows artifacts
+*.lnk
+$RECYCLE.BIN/
+
+# Signing / certificates
+*.pfx
+*.cer
+*.p12
+*.pem
+*.key
+
+# Environment / secrets
+.env
+.envrc
+
+# Coverage / test
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Logs
+*.log
+
+# Scan output
+*.csv

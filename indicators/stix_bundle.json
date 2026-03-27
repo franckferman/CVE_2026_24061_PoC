@@ -1,0 +1,186 @@
+{
+  "type": "bundle",
+  "id": "bundle--f255c866-491b-5a88-81ab-9caaf969f3bf",
+  "objects": [
+    {
+      "type": "identity",
+      "spec_version": "2.1",
+      "id": "identity--5ebdfb4b-4841-58e5-9b0b-1a7b4fb922ad",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "name": "franckferman",
+      "identity_class": "individual",
+      "description": "Security researcher - CVE-2026-24061 analysis and PoC author"
+    },
+    {
+      "type": "vulnerability",
+      "spec_version": "2.1",
+      "id": "vulnerability--c24f077e-b7af-5f65-b286-768424a2d048",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "created_by_ref": "identity--5ebdfb4b-4841-58e5-9b0b-1a7b4fb922ad",
+      "name": "CVE-2026-24061",
+      "description": "GNU InetUtils telnetd fails to sanitize client-supplied environment variables received via the Telnet NEW-ENVIRON option (RFC 1572). By injecting USER=\"-f root\" during the protocol handshake, an unauthenticated attacker causes telnetd to invoke \"login -f root\", granting a root shell without credential verification. CVSS 3.1: 9.8 Critical (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H).",
+      "external_references": [
+        {
+          "source_name": "cve",
+          "external_id": "CVE-2026-24061",
+          "url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-24061"
+        },
+        {
+          "source_name": "RFC 1572",
+          "url": "https://datatracker.ietf.org/doc/html/rfc1572",
+          "description": "Telnet Environment Option (NEW-ENVIRON)"
+        },
+        {
+          "source_name": "PoC",
+          "url": "https://github.com/franckferman/CVE_2026_24061"
+        },
+        {
+          "source_name": "cve",
+          "external_id": "CVE-2001-0797",
+          "description": "Historical precedent: SysV telnetd -f bypass"
+        }
+      ]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--d8286eb6-27f2-5330-8353-482c32dafbdb",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "created_by_ref": "identity--5ebdfb4b-4841-58e5-9b0b-1a7b4fb922ad",
+      "name": "CVE-2026-24061 Exploit Payload",
+      "description": "Detects the Telnet NEW-ENVIRON sub-negotiation payload containing VAR USER VALUE \"-f root\" used to exploit CVE-2026-24061. Hex: FF FA 27 00 00 55 53 45 52 01 2D 66 20 72 6F 6F 74 FF F0",
+      "indicator_types": [
+        "malicious-activity"
+      ],
+      "pattern": "[network-traffic:dst_port = 23 AND network-traffic:extensions.'tcp-ext'.src_payload_ref.payload_bin = 'v/onAABVU0VSAS1mIHJvb3T/8A==']",
+      "pattern_type": "stix",
+      "valid_from": "2026-03-27T13:50:21.000Z",
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "initial-access"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern-t1190--62213ce3-cc80-51f7-b31e-9b7f6481243d",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "name": "Exploit Public-Facing Application",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1190",
+          "url": "https://attack.mitre.org/techniques/T1190/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "initial-access"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern-t1548--ac3a650a-4a3a-57dd-871c-b2d43301bff9",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "name": "Abuse Elevation Control Mechanism",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1548",
+          "url": "https://attack.mitre.org/techniques/T1548/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "privilege-escalation"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern-t1059--7f9a328a-f5de-5de8-8b68-84e700e2ee03",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "name": "Command and Scripting Interpreter",
+      "external_references": [
+        {
+          "source_name": "mitre-attack",
+          "external_id": "T1059",
+          "url": "https://attack.mitre.org/techniques/T1059/"
+        }
+      ],
+      "kill_chain_phases": [
+        {
+          "kill_chain_name": "mitre-attack",
+          "phase_name": "execution"
+        }
+      ]
+    },
+    {
+      "type": "course-of-action",
+      "spec_version": "2.1",
+      "id": "course-of-action--2bc9fb1a-e703-5dfa-b4b5-9a05e5e1e660",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "created_by_ref": "identity--5ebdfb4b-4841-58e5-9b0b-1a7b4fb922ad",
+      "name": "Mitigate CVE-2026-24061",
+      "description": "1. Disable telnetd immediately (systemctl disable telnet.socket --now). 2. Replace Telnet with SSH for all remote administration. 3. Apply vendor patch for GNU InetUtils when available. 4. Block TCP/23 at perimeter firewalls. 5. Deploy IDS signatures to detect NEW-ENVIRON USER=\"-f\" injection patterns. 6. Monitor auth.log for unexpected root logins via login(1)."
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--81f1d80d-d285-56e8-9433-7cfb71baed39",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--d8286eb6-27f2-5330-8353-482c32dafbdb",
+      "target_ref": "vulnerability--c24f077e-b7af-5f65-b286-768424a2d048",
+      "description": "Indicator detects exploitation of CVE-2026-24061"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--59958b80-bcc2-58f6-b4ec-31fb90086ea5",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "relationship_type": "uses",
+      "source_ref": "attack-pattern-t1190--62213ce3-cc80-51f7-b31e-9b7f6481243d",
+      "target_ref": "vulnerability--c24f077e-b7af-5f65-b286-768424a2d048",
+      "description": "T1190 exploits the telnetd vulnerability"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--d3e556f2-7e2b-52f9-9380-bc8317eb36f3",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "relationship_type": "uses",
+      "source_ref": "attack-pattern-t1548--ac3a650a-4a3a-57dd-871c-b2d43301bff9",
+      "target_ref": "vulnerability--c24f077e-b7af-5f65-b286-768424a2d048",
+      "description": "T1548 abuses login -f to escalate privileges"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--404ec151-4aff-572f-b071-23b65617bc46",
+      "created": "2026-03-27T13:50:21.000Z",
+      "modified": "2026-03-27T13:50:21.000Z",
+      "relationship_type": "mitigates",
+      "source_ref": "course-of-action--2bc9fb1a-e703-5dfa-b4b5-9a05e5e1e660",
+      "target_ref": "vulnerability--c24f077e-b7af-5f65-b286-768424a2d048",
+      "description": "Remediation steps for CVE-2026-24061"
+    }
+  ]
+}

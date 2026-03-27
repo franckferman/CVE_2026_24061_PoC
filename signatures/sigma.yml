@@ -1,0 +1,39 @@
+# CVE-2026-24061 - Telnet NEW-ENVIRON Authentication Bypass
+# Auto-generated on 2026-03-27
+# Sigma specification: https://sigmahq.io/
+
+title: CVE-2026-24061 Telnet NEW-ENVIRON Auth Bypass Attempt
+id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+status: experimental
+description: |
+    Detects exploitation attempts of CVE-2026-24061 where an attacker injects
+    USER="-f root" via the Telnet NEW-ENVIRON option to bypass authentication
+    in GNU InetUtils telnetd.
+references:
+    - https://github.com/franckferman/CVE_2026_24061
+    - https://datatracker.ietf.org/doc/html/rfc1572
+    - https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-24061
+author: franckferman
+date: 2026-03-27
+tags:
+    - attack.initial_access
+    - attack.t1190
+    - attack.privilege_escalation
+    - attack.t1548
+    - cve.2026.24061
+logsource:
+    category: network_connection
+    product: any
+detection:
+    selection_port:
+        dst_port: 23
+    selection_payload:
+        payload|contains:
+            - 'USER'
+            - '-f root'
+    selection_ids:
+        alert.signature|contains: 'CVE-2026-24061'
+    condition: selection_port and (selection_payload or selection_ids)
+falsepositives:
+    - Legitimate use of Telnet NEW-ENVIRON with USER variable (very rare)
+level: critical
